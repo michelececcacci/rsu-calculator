@@ -12,7 +12,7 @@ from unittest.mock import MagicMock
 
 import pandas as pd
 
-from src.rsu_calculator import get_price_for_date
+from src.price_fetcher import get_price_for_date
 
 
 def make_hist(dates_and_prices: List[Tuple[date, float]]) -> pd.DataFrame:
