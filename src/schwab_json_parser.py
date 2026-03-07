@@ -29,6 +29,11 @@ class SchwabJsonParser:
             date_raw = t.get("Date")
             if not date_raw:
                 continue
+
+            # Explicitly ignore non-RSU-related cash movements that may appear
+            # in the Schwab export alongside stock plan activity.
+            if action_raw in {"Credit Interest", "Wire Sent"}:
+                continue
                 
             date = datetime.strptime(date_raw, "%m/%d/%Y")
             qty = int(t.get("Quantity", 0))

@@ -29,5 +29,40 @@ class TestSchwabJsonParser(unittest.TestCase):
         self.assertEqual(sell_tx.quantity, 30.0)
         self.assertEqual(sell_tx.symbol, "GOOGL")
 
+    def test_ignores_credit_interest_and_wire_sent(self):
+        json_data = {
+            "BrokerageTransactions": [
+                {
+                    "Date": "12/01/2024",
+                    "Action": "Credit Interest",
+                    "Symbol": "GOOGL",
+                    "Description": "interest on cash balance",
+                    "Quantity": "10",
+                },
+                {
+                    "Date": "12/02/2024",
+                    "Action": "Wire Sent",
+                    "Symbol": "GOOGL",
+                    "Description": "outgoing wire",
+                    "Quantity": "5",
+                },
+                {
+                    "Date": "12/03/2024",
+                    "Action": "Sell",
+                    "Symbol": "GOOGL",
+                    "Description": "RSU sale",
+                    "Quantity": "30",
+                },
+            ]
+        }
+
+        transactions = SchwabJsonParser.parse_data(json_data)
+
+        # Only the Sell should be parsed into a Transaction
+        self.assertEqual(len(transactions), 1)
+        self.assertEqual(transactions[0].action, TransactionAction.SELL)
+        self.assertEqual(transactions[0].quantity, 30)
+        self.assertEqual(transactions[0].symbol, "GOOGL")
+
 if __name__ == '__main__':
     unittest.main()
