@@ -7,17 +7,17 @@ import tempfile
 
 from src.rsu_calculator import (
     match_transactions,
-    get_historical_price,
     get_exchange_rate,
     calculate_rsu_metrics
 )
+from src.price_fetcher import PriceFetcher
 from src.models import Transaction, TransactionAction
 
 class TestRSUCalculator(unittest.TestCase):
 
     def test_match_transactions_full_sell(self):
-        tx1 = Transaction(date=datetime(2023, 1, 15), action=TransactionAction.VEST, quantity=50.0, symbol="AAPL")
-        tx2 = Transaction(date=datetime(2023, 6, 15), action=TransactionAction.SELL, quantity=50.0, symbol="AAPL")
+        tx1 = Transaction(date=datetime(2023, 1, 15), action=TransactionAction.VEST, quantity=50, symbol="AAPL")
+        tx2 = Transaction(date=datetime(2023, 6, 15), action=TransactionAction.SELL, quantity=50, symbol="AAPL")
         
         data = match_transactions([tx1, tx2])
         self.assertEqual(len(data), 1)
@@ -25,12 +25,12 @@ class TestRSUCalculator(unittest.TestCase):
         self.assertEqual(data[0]['Ticker'], 'AAPL')
         self.assertEqual(data[0]['Vest Date'], '2023-01-15')
         self.assertEqual(data[0]['Sell Date'], '2023-06-15')
-        self.assertEqual(data[0]['Shares'], 50.0)
+        self.assertEqual(data[0]['Shares'], 50)
 
     def test_match_transactions_partial_sell_and_unsold(self):
-        tx1 = Transaction(date=datetime(2023, 1, 15), action=TransactionAction.VEST, quantity=50.0, symbol="AAPL")
-        tx2 = Transaction(date=datetime(2023, 3, 10), action=TransactionAction.VEST, quantity=20.0, symbol="GOOG")
-        tx3 = Transaction(date=datetime(2023, 6, 15), action=TransactionAction.SELL, quantity=20.0, symbol="AAPL")
+        tx1 = Transaction(date=datetime(2023, 1, 15), action=TransactionAction.VEST, quantity=50, symbol="AAPL")
+        tx2 = Transaction(date=datetime(2023, 3, 10), action=TransactionAction.VEST, quantity=20, symbol="GOOG")
+        tx3 = Transaction(date=datetime(2023, 6, 15), action=TransactionAction.SELL, quantity=20, symbol="AAPL")
         
         data = match_transactions([tx1, tx2, tx3])
         self.assertEqual(len(data), 3)
@@ -48,22 +48,20 @@ class TestRSUCalculator(unittest.TestCase):
         self.assertEqual(len(goog_unsold), 1)
         self.assertEqual(goog_unsold[0]['Shares'], 20)
 
-    @patch('src.rsu_calculator.yf.Ticker')
+    @patch('src.price_fetcher.yf.Ticker')
     def test_get_historical_price(self, mock_ticker):
-        # Mocking the yfinance History Dataframe
         mock_hist_df = pd.DataFrame(
-            {'Close': [150.0, 155.0, 152.0]},
-            index=pd.to_datetime(['2023-01-10', '2023-01-11', '2023-01-12']).tz_localize('UTC')
+            {'Close': [150.0]},
+            index=pd.to_datetime(['2023-01-13'])
         )
         mock_instance = MagicMock()
         mock_instance.history.return_value = mock_hist_df
         mock_ticker.return_value = mock_instance
 
-        # We request price on 2023-01-13 (which returns dates up to 12th based on our mock)
-        price = get_historical_price("AAPL", "2023-01-13")
+        price = PriceFetcher.get_historical_price("AAPL", "2023-01-13")
         
-        # It should pick the last row (152.0)
-        self.assertEqual(price, 152.0)
+        self.assertEqual(price, 150.0)
+        mock_instance.history.assert_called_once_with(start="2023-01-13", end="2023-01-14")
 
     def test_calculate_rsu_metrics_with_sell(self):
         def mock_price_fetcher(ticker, date_str):

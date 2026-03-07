@@ -3,15 +3,46 @@ import csv
 import json
 from datetime import datetime, timedelta
 import sys
+from typing import Callable, Optional, TypedDict
 
 import pandas as pd
 import yfinance as yf
 
 from src.models import Transaction, TransactionAction
 from src.schwab_json_parser import SchwabJsonParser
+from src.price_fetcher import PriceFetcher
+from src.fx_rate_calculator import FxRateCalculator
 
 
-def match_transactions(transactions: list[Transaction]):
+
+class MatchedTransaction(TypedDict):
+    Ticker: str
+    Vest_Date: str  # noqa: N815
+    Sell_Date: Optional[str]  # noqa: N815
+    Shares: int
+
+
+class RSUResult(TypedDict):
+    Ticker: str
+    Shares: int
+    Vest_Date: str  # noqa: N815
+    Sell_Date: str  # noqa: N815
+    Vest_Price_USD: float  # noqa: N815
+    Sell_Price_USD: float  # noqa: N815
+    Cost_Basis_USD: float  # noqa: N815
+    Proceeds_USD: float  # noqa: N815
+    Gain_USD: float  # noqa: N815
+    Cost_Basis_EUR: float  # noqa: N815
+    Proceeds_EUR: float  # noqa: N815
+    Gain_EUR: float  # noqa: N815
+
+
+# Type aliases for injectable fetchers
+PriceFetcherFn = Callable[[str, Optional[str]], Optional[float]]
+RateFetcherFn = Callable[..., Optional[float]]
+
+
+def match_transactions(transactions: list[Transaction]) -> list[MatchedTransaction]:
     vests = []
     sells = []
     
@@ -59,66 +90,56 @@ def match_transactions(transactions: list[Transaction]):
             
     return data
 
-def get_historical_price(ticker_symbol, date_str):
-    """
-    Fetches the adjusted close price for a ticker on a specific date.
-    If the date is a weekend/holiday, queries backwards to find the closest trading day.
-    """
-    if not date_str:
-        return None
-        
-    date_obj = datetime.strptime(date_str, "%Y-%m-%d")
-    
-    # Search window of 7 days prior
-    start_date_str = (date_obj - timedelta(days=7)).strftime("%Y-%m-%d")
-    next_day_str = (date_obj + timedelta(days=1)).strftime("%Y-%m-%d")
-    
-    ticker = yf.Ticker(ticker_symbol)
-    hist = ticker.history(start=start_date_str, end=next_day_str)
-    
-    if hist.empty:
-        raise ValueError(f"No price data found for {ticker_symbol} around {date_str}.")
-        
-    # Filter out future dates (time zone issues fix)
-    target_dt = pd.to_datetime(date_str).tz_localize(hist.index.tz)
-    hist = hist[hist.index <= target_dt]
-    
-    if hist.empty:
-         raise ValueError(f"No price data found for {ticker_symbol} on or before {date_str}.")
-         
-    close_price = hist['Close'].iloc[-1]
-    return float(close_price)
-
-def get_exchange_rate(date_str, base_currency="EUR", target_currency="USD"):
-    """
-    Fetches the historical exchange rate.
-    USDEUR=X gets the value of 1 USD in EUR.
-    """
-    if not date_str:
-        return None
-        
-    ticker_symbol = f"{target_currency}{base_currency}=X"
-    return get_historical_price(ticker_symbol, date_str)
+_FX_CALCULATOR = None
 
 
-def calculate_rsu_metrics(data, price_fetcher=None, rate_fetcher=None):
+def _get_fx_calculator() -> FxRateCalculator:
+    """Return a lazily constructed shared FxRateCalculator instance."""
+    global _FX_CALCULATOR
+    if _FX_CALCULATOR is None:
+        _FX_CALCULATOR = FxRateCalculator()
+    return _FX_CALCULATOR
+
+
+def get_exchange_rate(date_str: str, base_currency: str, target_currency: str) -> float:
+    """Return the USD→EUR FX rate for the given date using ECB data.
+
+    The `base_currency` and `target_currency` parameters are accepted for
+    compatibility with injected/mocked implementations but are currently
+    restricted to EUR/USD.
+    """
+    if base_currency != "EUR" or target_currency != "USD":
+        raise ValueError("Only EUR/USD FX rates are supported.")
+
+    fx = _get_fx_calculator()
+    # ECB data is EUR→USD; invert to get USD→EUR so downstream code can
+    # multiply USD amounts by this factor to obtain EUR values.
+    eur_to_usd = fx.get_rate("USD", date_str)
+    return 1.0 / float(eur_to_usd)
+
+
+def calculate_rsu_metrics(
+    data: list[MatchedTransaction],
+    price_fetcher: Optional[PriceFetcherFn] = None,
+    rate_fetcher: Optional[RateFetcherFn] = None,
+) -> list[RSUResult]:
     if price_fetcher is None:
-        price_fetcher = get_historical_price
+        price_fetcher = PriceFetcher.get_historical_price
     if rate_fetcher is None:
         rate_fetcher = get_exchange_rate
 
-    results = []
+    results: list[RSUResult] = []
     for row in data:
-        ticker = row['Ticker']
-        shares = row['Shares']
-        vest_date = row['Vest Date']
-        sell_date = row['Sell Date']
+        ticker: str = row['Ticker']
+        shares: int = row['Shares']
+        vest_date: str = row['Vest Date']
+        sell_date: Optional[str] = row['Sell Date']
         
         # Prices
         vest_price_usd = price_fetcher(ticker, vest_date)
         sell_price_usd = price_fetcher(ticker, sell_date) if sell_date else None
         
-        # Forex (1 USD = X EUR) -> USDEUR=X
+        # Forex: factor to convert USD amounts into EUR using ECB FX data
         usd_to_eur_vest = rate_fetcher(vest_date, base_currency="EUR", target_currency="USD")
         usd_to_eur_sell = rate_fetcher(sell_date, base_currency="EUR", target_currency="USD") if sell_date else None
         
@@ -154,7 +175,7 @@ def calculate_rsu_metrics(data, price_fetcher=None, rate_fetcher=None):
         
     return results
 
-def print_summary(results):
+def print_summary(results: list[RSUResult]) -> None:
     df = pd.DataFrame(results)
     
     display_cols = [
@@ -175,7 +196,7 @@ def print_summary(results):
         print(f"Total Proceeds (EUR)  : {total_proceeds_eur:,.2f}")
         print(f"Total Gain (EUR)      : {total_gain_eur:,.2f}")
 
-def main():
+def main() -> int:
     parser = argparse.ArgumentParser(description="Calculate Cost Basis and Gains for RSUs in EUR.")
     parser.add_argument("file", help="Path to the input CSV or JSON file")
     args = parser.parse_args()
