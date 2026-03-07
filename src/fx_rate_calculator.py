@@ -81,8 +81,7 @@ class FxRateCalculator:
         code = currency.upper()
         if code not in self._rates.columns:
             raise ValueError(
-                f"Currency '{code}' not found. "
-                f"Available currencies: {self.currencies}"
+                f"Currency '{code}' not found. Available currencies: {self.currencies}"
             )
         return code
 

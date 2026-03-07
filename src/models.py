@@ -7,6 +7,7 @@ class TransactionAction(Enum):
     VEST = "Vest"
     SELL = "Sell"
 
+
 @dataclass
 class Transaction:
     date: datetime

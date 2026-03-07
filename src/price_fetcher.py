@@ -15,4 +15,4 @@ class PriceFetcher:
         if hist.empty:
             raise ValueError(f"No price data found for {ticker_symbol} on {date_str}.")
 
-        return hist['Close'].iloc[0]
+        return hist["Close"].iloc[0]
