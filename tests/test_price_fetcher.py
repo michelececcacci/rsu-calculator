@@ -9,3 +9,6 @@ class TestPriceFetcher(unittest.TestCase):
 
     def test_historical_price_aapl(self):
         self.assertAlmostEqual(264.18, PriceFetcher.get_historical_price("AAPL", "2026-02-27"), 4)
+
+    def test_historical_price_pins(self):
+        self.assertAlmostEqual(31.34, PriceFetcher.get_historical_price("PINS", "2024-12-03"), 4)
