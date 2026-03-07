@@ -1,3 +1,5 @@
 yfinance>=0.2.40
 pandas>=1.0.0
 xlrd>=2.0.1
+ruff>=0.15.5
+ty>=0.0.21

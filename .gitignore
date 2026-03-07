@@ -31,6 +31,10 @@ wheels/
 *.swp
 *.swo
 
+# Tool caches
+.ruff_cache/
+.ty_cache/
+
 # OS
 .DS_Store
 Thumbs.db

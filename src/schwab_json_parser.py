@@ -4,6 +4,7 @@ from typing import List
 
 from src.models import Transaction, TransactionAction
 
+
 class SchwabJsonParser:
     @staticmethod
     def parse_file(file_path: str) -> List[Transaction]:

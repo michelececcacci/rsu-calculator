@@ -1,0 +1,35 @@
+[project]
+name = "rsu-calculator"
+version = "0.1.0"
+description = "Calculate RSU cost basis and gains in EUR from Schwab exports."
+requires-python = ">=3.11"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+# Start with the core rule families; you can expand this list over time.
+select = ["E", "F", "N", "I"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.ty.environment]
+# Adjust this to match the Python version you actually use.
+python-version = "3.11"
+python-platform = "darwin"
+
+[tool.ty.src]
+include = ["src", "tests"]
+
+# Start with ty's default rules; customize here as you adopt it.
+[tool.ty.rules]
+# Example:
+# possibly-unresolved-reference = "warn"
+# index-out-of-bounds = "ignore"
+

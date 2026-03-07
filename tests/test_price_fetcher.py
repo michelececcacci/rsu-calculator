@@ -1,5 +1,7 @@
-from src.price_fetcher import PriceFetcher
 import unittest
+
+from src.price_fetcher import PriceFetcher
+
 
 class TestPriceFetcher(unittest.TestCase):
     def test_get_historical_price_goog(self):

@@ -1,18 +1,13 @@
 import argparse
-import csv
-import json
-from datetime import datetime, timedelta
 import sys
 from typing import Callable, Optional, TypedDict
 
 import pandas as pd
-import yfinance as yf
 
-from src.models import Transaction, TransactionAction
-from src.schwab_json_parser import SchwabJsonParser
-from src.price_fetcher import PriceFetcher
 from src.fx_rate_calculator import FxRateCalculator
-
+from src.models import Transaction, TransactionAction
+from src.price_fetcher import PriceFetcher
+from src.schwab_json_parser import SchwabJsonParser
 
 
 class MatchedTransaction(TypedDict):

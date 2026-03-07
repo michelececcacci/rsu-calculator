@@ -1,17 +1,13 @@
 import unittest
-from unittest.mock import patch, MagicMock
-import pandas as pd
 from datetime import datetime
-import os
-import tempfile
+from unittest.mock import MagicMock, patch
 
-from src.rsu_calculator import (
-    match_transactions,
-    get_exchange_rate,
-    calculate_rsu_metrics
-)
-from src.price_fetcher import PriceFetcher
+import pandas as pd
+
 from src.models import Transaction, TransactionAction
+from src.price_fetcher import PriceFetcher
+from src.rsu_calculator import calculate_rsu_metrics, match_transactions
+
 
 class TestRSUCalculator(unittest.TestCase):
 

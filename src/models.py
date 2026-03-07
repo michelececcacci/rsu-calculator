@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
-from enum import Enum, auto
+from enum import Enum
+
 
 class TransactionAction(Enum):
     VEST = "Vest"

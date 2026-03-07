@@ -1,9 +1,10 @@
-import unittest
 import os
+import unittest
 from datetime import datetime
 
-from src.schwab_json_parser import SchwabJsonParser
 from src.models import TransactionAction
+from src.schwab_json_parser import SchwabJsonParser
+
 
 class TestSchwabJsonParser(unittest.TestCase):
     def test_load_schwab_data_json(self):
