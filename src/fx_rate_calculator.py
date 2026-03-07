@@ -52,7 +52,7 @@ class FxRateCalculator:
                 return None
             return Decimal(str(value))
 
-        data = data.applymap(to_decimal)
+        data = data.map(to_decimal)
 
         return data
 
