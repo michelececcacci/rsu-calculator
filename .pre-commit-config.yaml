@@ -16,3 +16,10 @@ repos:
         language: system
         types: [python]
         pass_filenames: true
+
+      - id: tests
+        name: run tests
+        entry: python -m unittest discover
+        language: python
+        types: [python]
+        stages: [commit]

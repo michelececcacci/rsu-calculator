@@ -1,7 +1,7 @@
 import csv
 import re
 from datetime import datetime
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal
 from typing import List
 
 from src.models import SchwabRealizedLot
@@ -18,6 +18,7 @@ class SchwabTransactionReader:
             lots: List[SchwabRealizedLot] = []
 
             for row in reader:
+                print(row)
                 lots.append(SchwabTransactionReader._parse_row(row))
 
             return lots
@@ -35,34 +36,19 @@ class SchwabTransactionReader:
             proceeds=SchwabTransactionReader._parse_decimal(row["Proceeds"]),
             cost_basis=SchwabTransactionReader._parse_decimal(row["Cost Basis (CB)"]),
             gain_loss_dollars=SchwabTransactionReader._parse_decimal(row["Gain/Loss ($)"]),
-            long_term_gain_loss=SchwabTransactionReader._parse_decimal(row["Long Term Gain/Loss"]),
-            short_term_gain_loss=SchwabTransactionReader._parse_decimal(
-                row["Short Term Gain/Loss"]
-            ),
             term=row["Term"],
             unadjusted_cost_basis=SchwabTransactionReader._parse_decimal(
                 row["Unadjusted Cost Basis"]
             ),
-            disallowed_loss=SchwabTransactionReader._parse_decimal(row["Disallowed Loss"]),
             transaction_closed_date=SchwabTransactionReader._parse_date(
                 row["Transaction Closed Date"]
-            ),
-            transaction_cost_basis=SchwabTransactionReader._parse_decimal(
-                row["Transaction Cost Basis"]
-            ),
-            total_transaction_gain_loss_dollars=SchwabTransactionReader._parse_decimal(
-                row["Total Transaction Gain/Loss ($)"]
             ),
         )
 
     @staticmethod
     def _parse_decimal(value: str) -> Decimal:
         clean_val = re.sub(r"[$,%]", "", value).replace(",", "")
-        try:
-            return Decimal(clean_val)
-        except (ValueError, InvalidOperation) as e:
-            print(f"exception {e} for {clean_val}")
-            return Decimal("0.0")
+        return Decimal(clean_val)
 
     @staticmethod
     def _parse_date(value: str) -> datetime:
