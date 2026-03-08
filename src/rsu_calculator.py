@@ -211,11 +211,15 @@ def print_summary(results: list[RSUResult]) -> None:
     total_cost_eur = df["Cost Basis (EUR)"].sum()
     total_proceeds_eur = df["Proceeds (EUR)"].sum()
     total_gain_eur = df["Gain (EUR)"].sum()
+    total_proceeds_usd = df["Proceeds (USD)"].sum()
+    total_gain_usd = df["Gain (USD)"].sum()
 
     print(f"Total Cost Basis (EUR): {total_cost_eur:,.2f}")
     if any(r["Sell Date"] != "N/A" for r in results):
         print(f"Total Proceeds (EUR)  : {total_proceeds_eur:,.2f}")
         print(f"Total Gain (EUR)      : {total_gain_eur:,.2f}")
+        print(f"Total Proceeds (USD)  : {total_proceeds_usd:,.2f}")
+        print(f"Total Gain (USD)      : {total_gain_usd:,.2f}")
 
 
 def main() -> int:
