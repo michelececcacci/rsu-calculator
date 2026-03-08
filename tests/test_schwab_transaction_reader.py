@@ -5,7 +5,7 @@ from decimal import Decimal
 from src.schwab_transaction_reader import SchwabTransactionReader
 
 
-class TestSchwabCsvParsing(unittest.TestCase):
+class TestSchwabTransactionReader(unittest.TestCase):
     def test_parse_dummy_transactions(self):
         # Get the path to dummy_transactions.csv relative to this file
         current_dir = os.path.dirname(os.path.abspath(__file__))
