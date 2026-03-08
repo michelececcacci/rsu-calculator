@@ -110,27 +110,3 @@ class FxRateCalculator:
             f"No FX rate available for {code} on {target_ts.date()}. "
             f"Data covers {self.date_range[0].date()} to {self.date_range[1].date()}."
         )
-
-    def get_rate_nearest(
-        self, currency: str, target_date: Union[str, date, datetime]
-    ) -> tuple[Decimal, datetime]:
-        """Get the rate for the nearest available date (useful for weekends/holidays).
-
-        Returns:
-            A tuple of (rate, actual_date_used), where rate is a Decimal and
-            the date is a timezone-naive datetime.
-        """
-        code = self._ensure_currency(currency)
-        target_ts = self._to_timestamp(target_date)
-
-        # Get the column without NaNs
-        valid = self._rates[code].dropna()
-        if valid.empty:
-            raise ValueError(f"No valid rates found for {code}.")
-
-        # Find nearest date
-        idx = valid.index.get_indexer([target_ts], method="nearest")[0]
-        actual_date = valid.index[idx]
-        rate = valid.iloc[idx]
-
-        return rate, actual_date.to_pydatetime()
