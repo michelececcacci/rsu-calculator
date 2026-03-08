@@ -30,18 +30,11 @@ class SchwabRealizedLot:
     proceeds: Decimal
     cost_basis: Decimal
     gain_loss_dollars: Decimal
-    gain_loss_percent: Decimal
     long_term_gain_loss: Decimal
     short_term_gain_loss: Decimal
     term: str
     unadjusted_cost_basis: Decimal
-    wash_sale: bool
     disallowed_loss: Decimal
     transaction_closed_date: datetime
     transaction_cost_basis: Decimal
     total_transaction_gain_loss_dollars: Decimal
-    total_transaction_gain_loss_percent: Decimal
-    lt_transaction_gain_loss_dollars: Decimal
-    lt_transaction_gain_loss_percent: Decimal
-    st_transaction_gain_loss_dollars: Decimal
-    st_transaction_gain_loss_percent: Decimal
