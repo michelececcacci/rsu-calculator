@@ -10,7 +10,7 @@ class TestFxRateCalculator(unittest.TestCase):
         calc = FxRateCalculator()  # Uses the real XLS asset
         self.assertIn("USD", calc.currencies)
 
-        usd_series = calc._rates["USD"].dropna()  # type: ignore[attr-defined]
+        usd_series = calc._rates["USD"].dropna()
         self.assertFalse(usd_series.empty)
 
         # Use the first and last available USD dates from the real data
